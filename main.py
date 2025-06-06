@@ -4,7 +4,7 @@ from vision.perception import detect_robot_position
 from planning.planner import a_star, find_nearest_goal, draw_path_on_frame
 from control.controller import follow_path
 from network.client import RaspiVisionClient
-from CamCalibration import undistort_frame, get_new_K
+from vision.CamCalibration import undistort_frame, get_new_K
 
 world_points = np.array([[0, 0], [0, 90], [180, 90], [180, 0]], dtype=np.float32)
 clicked_points = []
