@@ -1,8 +1,8 @@
-import requests
 import threading
-import collections
+import requests
 import cv2
 import numpy as np
+import collections
 
 class RaspiVisionClient:
     def __init__(self, server_ip):
@@ -10,7 +10,7 @@ class RaspiVisionClient:
         self.frame_queue = collections.deque(maxlen=5)
         self.queue_lock = threading.Lock()
         self.running = False
-        self.stream_url = f'http://{server_ip}:5000/stream/2ce8fa8a-6010-463a-834f-18bcb78d022d'
+        self.stream_url = f'http://{server_ip}:5000/stream/global'
         self.latest_frame = None
 
     def network_thread(self):
