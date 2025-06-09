@@ -10,7 +10,7 @@ class RaspiVisionClient:
         self.frame_queue = collections.deque(maxlen=5)
         self.queue_lock = threading.Lock()
         self.running = False
-        self.stream_url = f'http://{server_ip}:5000/stream/6bb4fb72-180f-4cdd-820d-3975448f18c4'
+        self.stream_url = f'http://{server_ip}:5000/stream/2ce8fa8a-6010-463a-834f-18bcb78d022d'
         self.latest_frame = None
 
     def network_thread(self):

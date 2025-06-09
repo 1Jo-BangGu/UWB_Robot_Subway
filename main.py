@@ -16,7 +16,7 @@ transform_calculated = False
 obstacle_done = False
 goal_done = False
 
-client = RaspiVisionClient("192.168.201.168")
+client = RaspiVisionClient("192.168.201.193")
 client.start()
 while client.latest_frame is None:
     pass
