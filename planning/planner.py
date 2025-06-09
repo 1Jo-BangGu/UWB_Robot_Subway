@@ -12,9 +12,16 @@ class Node:
         return self.f < other.f
 
 def get_action():
-    return [(0, 1, 1), (1, 0, 1), (0, -1, 1), (-1, 0, 1),
-            (1, 1, math.sqrt(2)), (1, -1, math.sqrt(2)),
-            (-1, -1, math.sqrt(2)), (-1, 1, math.sqrt(2))]
+    actions = [
+        (0, 1, 1), (1, 0, 1), (0, -1, 1), (-1, 0, 1),
+        (1, 1, math.sqrt(2)), (1, -1, math.sqrt(2)),
+        (-1, -1, math.sqrt(2)), (-1, 1, math.sqrt(2)),
+        (2, 1, math.sqrt(5)), (1, 2, math.sqrt(5)),
+        (-2, 1, math.sqrt(5)), (-1, 2, math.sqrt(5)),
+        (2, -1, math.sqrt(5)), (1, -2, math.sqrt(5)),
+        (-2, -1, math.sqrt(5)), (-1, -2, math.sqrt(5))
+    ]
+    return actions
 
 def heuristic(pos, goal):
     return math.hypot(goal[0] - pos[0], goal[1] - pos[1])
