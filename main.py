@@ -23,18 +23,14 @@ goal_input_done = False
 robot_position = None
 latest_path = []
 
-<<<<<<< HEAD
-=======
 # 학습 파일 로드
 models = {
     "FALL": YOLO("C:/Users/User/Desktop/Pinky_Git/UWB_Robot_Subway/best/fall_detection_best.pt"),
     "FIRE": YOLO("C:/Users/User/Desktop/Pinky_Git/UWB_Robot_Subway/best/fire_detection_best.pt"),
-    "TRASHCAN": YOLO("C:/Users/User/Desktop/Pinky_Git/UWB_Robot_Subway/best/trashcan_detection_best.pt"),
-    "COLUMN": YOLO("C:/Users/User/Desktop/Pinky_Git/UWB_Robot_Subway/best/column_detection_best.pt")
+    # "TRASHCAN": YOLO("C:/Users/User/Desktop/Pinky_Git/UWB_Robot_Subway/best/trashcan_detection_best.pt"),
+    # "COLUMN": YOLO("C:/Users/User/Desktop/Pinky_Git/UWB_Robot_Subway/best/column_detection_best.pt")
 }
 
-# 마우스 입력 처리
->>>>>>> 739067d4fd5a89e2c7da0a0e87f653e39f97a96e
 def mouse_callback(event, x, y, flags, param):
     global clicked_points, obstacle_clicks, goal_clicks
     global M_pixel2real, M_real2pixel, transform_calculated, obstacle_input_done, goal_input_done
@@ -82,26 +78,8 @@ if __name__ == "__main__":
             continue
         frame = undistort_frame(frame, new_K)
 
-<<<<<<< HEAD
         # 좌표계 정의 시각화
         for pt in clicked_points:
-=======
-        # YOLO Object Detection
-        annotated_frame = frame.copy()
-        for label, model in models.items():
-            results = model.predict(source=frame, imgsz=640, conf=0.5, verbose=False)
-            for result in results:
-                boxes = result.boxes
-                for box in boxes:
-                    x1, y1, x2, y2 = map(int, box.xyxy[0])
-                    conf = float(box.conf[0])
-                    cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                    cv2.putText(annotated_frame, f"{label} {conf:.2f}", (x1, y1 - 5),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
-        frame = annotated_frame  # Frame update with Bounding Box
-
-        for idx, pt in enumerate(clicked_points):
->>>>>>> 739067d4fd5a89e2c7da0a0e87f653e39f97a96e
             cv2.circle(frame, tuple(pt), 8, (0, 0, 255), -1)
         if len(clicked_points) == 4:
             pts = np.array(clicked_points, np.int32).reshape((-1, 1, 2))
@@ -184,6 +162,19 @@ if __name__ == "__main__":
         with raspi_client.queue_lock:
             raspi_frame = raspi_client.latest_frame.copy() if raspi_client.latest_frame is not None else None
         if raspi_frame is not None:
-            cv2.imshow("Raspi View", raspi_frame)
+            # YOLO Detection on Raspi View
+            annotated_raspi = raspi_frame.copy()
+            for label, model in models.items():
+                results = model.predict(source=raspi_frame, imgsz=640, conf=0.5, verbose=False)
+                for result in results:
+                    boxes = result.boxes
+                    for box in boxes:
+                        x1, y1, x2, y2 = map(int, box.xyxy[0])
+                        conf = float(box.conf[0])
+                        cv2.rectangle(annotated_raspi, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                        cv2.putText(annotated_raspi, f"{label} {conf:.2f}", (x1, y1 - 5),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
+
+            cv2.imshow("Raspi View", annotated_raspi)
 
     cv2.destroyAllWindows()
