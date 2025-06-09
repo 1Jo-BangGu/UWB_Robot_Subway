@@ -1,11 +1,12 @@
 # CamCalibration.py
 import cv2
 import numpy as np
+import os
 
-# 보정 파라미터 로드
-K = np.load("camera_matrix.npy")
-dist = np.load("dist_coeffs.npy")
-
+# 현재 파일의 경로를 기준으로 .npy 경로 설정
+this_dir = os.path.dirname(__file__)
+K = np.load(os.path.join(this_dir, "camera_matrix.npy"))
+dist = np.load(os.path.join(this_dir, "dist_coeffs.npy"))
 # crop 좌표 (네가 실험해서 고정한 값)
 #crop_x, crop_y, crop_w, crop_h = 118, 72, 1144, 506
 
