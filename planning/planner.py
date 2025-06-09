@@ -1,7 +1,5 @@
-import math
 import heapq
-import cv2
-import numpy as np
+import math
 
 class Node:
     def __init__(self, parent=None, position=None):
@@ -13,6 +11,11 @@ class Node:
     def __lt__(self, other):
         return self.f < other.f
 
+def get_action():
+    return [(0, 1, 1), (1, 0, 1), (0, -1, 1), (-1, 0, 1),
+            (1, 1, math.sqrt(2)), (1, -1, math.sqrt(2)),
+            (-1, -1, math.sqrt(2)), (-1, 1, math.sqrt(2))]
+
 def heuristic(pos, goal):
     return math.hypot(goal[0] - pos[0], goal[1] - pos[1])
 
@@ -23,11 +26,6 @@ def collision_check(position, obstacle_list, robot_radius=10):
             return True
     return False
 
-def get_action():
-    return [(0, 1, 1), (1, 0, 1), (0, -1, 1), (-1, 0, 1),
-            (1, 1, math.sqrt(2)), (1, -1, math.sqrt(2)),
-            (-1, -1, math.sqrt(2)), (-1, 1, math.sqrt(2))]
-
 def reconstruct_path(current_node):
     path = []
     while current_node is not None:
@@ -36,14 +34,7 @@ def reconstruct_path(current_node):
     return path[::-1]
 
 def find_nearest_goal(current_pos, goals):
-    min_dist = float('inf')
-    nearest = None
-    for goal in goals:
-        dist = heuristic(current_pos, goal)
-        if dist < min_dist:
-            min_dist = dist
-            nearest = goal
-    return nearest
+    return min(goals, key=lambda goal: heuristic(current_pos, goal))
 
 def a_star(start, goal, space, obstacle_list):
     start_node = Node(None, tuple(start))
@@ -73,10 +64,3 @@ def a_star(start, goal, space, obstacle_list):
             neighbor.f = neighbor.g + neighbor.h
             heapq.heappush(open_list, (neighbor.f, neighbor))
     return []
-
-def draw_path_on_frame(frame, path, M_real2pixel):
-    for i in range(1, len(path)):
-        pt1 = cv2.perspectiveTransform(np.array([[[path[i-1][0], path[i-1][1]]]], dtype=np.float32), M_real2pixel)[0][0]
-        pt2 = cv2.perspectiveTransform(np.array([[[path[i][0], path[i][1]]]], dtype=np.float32), M_real2pixel)[0][0]
-        cv2.line(frame, tuple(pt1.astype(int)), tuple(pt2.astype(int)), (255, 0, 255), 2)
-    return frame
