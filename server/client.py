@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import collections
 
-class RaspiVisionClient:
+class Client:
     def __init__(self, server_ip):
         self.server_ip = server_ip
         self.frame_queue = collections.deque(maxlen=5)
