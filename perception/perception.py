@@ -1,3 +1,5 @@
+# perception.py
+
 import cv2
 import numpy as np
 import math
@@ -118,26 +120,30 @@ class Perception:
 
     
     def draw_visuals(self, frame, robot_pose, path, robot_center=None):
-        # 클릭한 4점
-        for pt in self.clicked_points:
-            cv2.circle(frame, tuple(pt), 8, (0, 0, 255), -1)
+        # =================== 🔴 클릭한 4점 (빨간 점만 path 없을 때 표시) ===================
+        if not path:
+            for pt in self.clicked_points:
+                cv2.circle(frame, tuple(pt), 8, (0, 0, 255), -1)
+
+        # ✅ 초록 사각형 라인 (항상 표시)
         if len(self.clicked_points) == 4:
             pts = np.array(self.clicked_points, np.int32).reshape((-1, 1, 2))
             cv2.polylines(frame, [pts], True, (0, 255, 0), 2)
 
-        # 장애물
+        # =================== 🟡 장애물 표시 ===================
         if self.M_real2pixel is not None:
             for (ox, oy, r) in self.get_obstacle_list():
                 center_px = cv2.perspectiveTransform(np.array([[[ox, oy]]], dtype=np.float32), self.M_real2pixel)[0][0].astype(int)
                 cv2.circle(frame, tuple(center_px), int(r), (0, 255, 255), 2)
                 cv2.putText(frame, "Obstacle", (center_px[0]+5, center_px[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 1)
 
-        # 경로
+        # =================== 🟣 경로 표시 ===================
         if path and self.M_real2pixel is not None:
             for i in range(1, len(path)):
                 pt1 = cv2.perspectiveTransform(np.array([[[path[i-1][0], path[i-1][1]]]], dtype=np.float32), self.M_real2pixel)[0][0]
                 pt2 = cv2.perspectiveTransform(np.array([[[path[i][0], path[i][1]]]], dtype=np.float32), self.M_real2pixel)[0][0]
                 cv2.line(frame, tuple(pt1.astype(int)), tuple(pt2.astype(int)), (255, 0, 255), 2)
+
             # 시작점 & 도착점
             start_px = cv2.perspectiveTransform(np.array([[[path[0][0], path[0][1]]]], dtype=np.float32), self.M_real2pixel)[0][0]
             end_px = cv2.perspectiveTransform(np.array([[[path[-1][0], path[-1][1]]]], dtype=np.float32), self.M_real2pixel)[0][0]
@@ -146,16 +152,17 @@ class Perception:
             cv2.circle(frame, tuple(end_px.astype(int)), 6, (0, 0, 255), -1)
             cv2.putText(frame, "Goal", (int(end_px[0]+5), int(end_px[1]-5)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
 
-        # 로봇 자세
+        # =================== 🔵 로봇 자세 표시 ===================
         if robot_pose and robot_center:
             x, y, yaw = robot_pose
             cx, cy = robot_center
             cv2.putText(frame, f"X:{x:.1f} Y:{y:.1f} Yaw:{yaw:.1f}",
                         (int(cx)+10, int(cy)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,0), 2)
-            
 
-        # 상태 안내 텍스트
-        cv2.putText(frame, f"Points: {len(self.clicked_points)}/4", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        # =================== 📋 상태 안내 텍스트 ===================
+        if not path:
+            cv2.putText(frame, f"Points: {len(self.clicked_points)}/4", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+
         if not self.transform_calculated:
             cv2.putText(frame, "Click 4 corners to define map area", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
         elif not self.obstacle_input_done:
