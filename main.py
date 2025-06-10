@@ -6,6 +6,7 @@ from perception.perception import detect_robot_position
 from planning.planner import a_star
 from network.client import RaspiVisionClient
 from perception.CamCalibration import undistort_frame, get_new_K
+from control.controller import follow_path
 
 # 보정용 매핑 좌표계
 world_points = np.array([[0, 0], [0, 90], [180, 90], [180, 0]], dtype=np.float32)
@@ -21,8 +22,10 @@ obstacle_input_done = False
 goal_input_done = False
 robot_position = None
 latest_path = []
+path_planned = False
 
 def mouse_callback(event, x, y, flags, param):
+    
     global clicked_points, obstacle_clicks, goal_clicks
     global M_pixel2real, M_real2pixel, transform_calculated, obstacle_input_done, goal_input_done
     if event == cv2.EVENT_LBUTTONDOWN:
@@ -85,7 +88,7 @@ if __name__ == "__main__":
                 goal_list_cm.append((real[0], real[1]))
 
         # 로봇 위치 검출 및 경로 생성 (입력 완료 후 한 번만)
-        if transform_calculated and obstacle_input_done and goal_input_done and M_pixel2real is not None:
+        if transform_calculated and obstacle_input_done and goal_input_done and M_pixel2real is not None and not path_planned:
             robot_pose, (cx, cy) = detect_robot_position(frame, M_pixel2real)
             if robot_pose is not None:
                 robot_position = robot_pose
@@ -106,9 +109,17 @@ if __name__ == "__main__":
                         segment_path += path
                     curr_pos = goal
                 latest_path = segment_path
+                path_planned = True
 
         # 경로 시각화
         if latest_path and M_real2pixel is not None:
+
+            # control test
+            left, right = follow_path(robot_pose, latest_path)
+            msg = f'{left}, {right}'
+            client.send_message(topic='control', message=msg)
+            # control test
+
             for i in range(1, len(latest_path)):
                 pt1 = cv2.perspectiveTransform(
                     np.array([[[latest_path[i-1][0], latest_path[i-1][1]]]], dtype=np.float32),
