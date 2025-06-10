@@ -76,11 +76,9 @@ if __name__ == "__main__":
                 patrol_signal=patrol_mode
             )
 
-            if stop_signal:
-                print("🟥 정지 조건 발생 또는 목표 도착")
 
             # ======================== 🎮 Control 단계 ========================
-            control.update_and_send(robot_position, latest_path)
+            control.update_and_send(robot_position, latest_path, stop_signal)
 
         # ======================== 🖼️ Visualization 단계 ========================
         perception.draw_visuals(

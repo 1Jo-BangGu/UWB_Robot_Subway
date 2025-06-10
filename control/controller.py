@@ -40,7 +40,11 @@ class Control:
 
         return int(left_speed), int(right_speed)
 
-    def update_and_send(self, robot_pose, path):
+    def update_and_send(self, robot_pose, path, stop_signal):
+        if stop_signal:
+            print("🟥 정지 조건 발생 또는 목표 도착")
+            return
+
         if not path:
             print("[Control] 경로 없음 → 제어 생략")
             return
@@ -50,7 +54,7 @@ class Control:
         msg = f"{left}, {right}"
 
         try:
-            self.client.send_message(topic='control', message=msg)
+            #self.client.send_message(topic='control', message=msg)
             print(f"[Control] 제어 명령 전송 완료 → {msg}")
         except Exception as e:
             print(f"[Control Error] 전송 실패: {e}")
