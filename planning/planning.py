@@ -16,9 +16,9 @@ class Node:
 class Planning:
     def __init__(self, robot_radius=10):
         self.robot_radius = robot_radius
-        self.current_path_idx = 0
-        self.precomputed_paths = []
-        self.path_sent = False
+        self.current_goal_idx = 0
+        self.latest_path = []
+        self.goal_reached = False
 
     def get_action(self):
         return [(0, 1, 1), (1, 0, 1), (0, -1, 1), (-1, 0, 1),
@@ -75,35 +75,29 @@ class Planning:
         stop_signal = False
         path = []
 
-        if not goals:
+        if not goals or self.current_goal_idx >= len(goals):
             stop_signal = True
-            return path, stop_signal
+            self.latest_path = []
+            return self.latest_path, stop_signal
 
-        if not self.precomputed_paths:
-            self.precomputed_paths = self.generate_all_paths(robot_pose[:2], goals, obstacle_list, map_size)
-            self.current_path_idx = 0
-            self.path_sent = False
+        current_goal = goals[self.current_goal_idx]
 
-        if self.current_path_idx < len(self.precomputed_paths):
-            path = self.precomputed_paths[self.current_path_idx]
-            if path:
-                last_goal = path[-1]
-                if self.heuristic(robot_pose[:2], last_goal) < 5:
-                    self.current_path_idx += 1
-                    self.path_sent = False
-                    if self.current_path_idx >= len(self.precomputed_paths):
-                        print("✅ 모든 경로 완료!")
-        return path, stop_signal
+        # 도달 판정
+        if self.heuristic(robot_pose[:2], current_goal) < 10:
+            self.current_goal_idx += 1
+            self.latest_path = []
+            if self.current_goal_idx >= len(goals):
+                stop_signal = True
+                print("✅ 모든 목표 도달 완료!")
+                return self.latest_path, stop_signal
 
-    def generate_all_paths(self, start_pos, goals, obstacles, map_size):
-        paths = []
-        current_pos = start_pos[:2]
-        for i, goal in enumerate(goals):
-            path = self.a_star(current_pos, goal, map_size, obstacles)
-            if not path:
-                print(f"⚠️ {i+1}번 경로 생성 실패")
-                paths.append([])
-            else:
-                paths.append(path)
-                current_pos = goal
-        return paths
+            current_goal = goals[self.current_goal_idx]
+
+        # 아직 도달하지 않았고 경로가 없으면 생성
+        if not self.latest_path:
+            self.latest_path = self.a_star(robot_pose[:2], current_goal, map_size, obstacle_list)
+            if not self.latest_path:
+                print(f"⚠️ {self.current_goal_idx+1}번 경로 생성 실패 → 다음으로")
+                self.current_goal_idx += 1
+
+        return self.latest_path, stop_signal

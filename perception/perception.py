@@ -125,7 +125,7 @@ class Perception:
             for pt in self.clicked_points:
                 cv2.circle(frame, tuple(pt), 8, (0, 0, 255), -1)
 
-        # ✅ 초록 사각형 라인 (항상 표시)
+        # ✅ 초록 사각형 라인 (협조 표시)
         if len(self.clicked_points) == 4:
             pts = np.array(self.clicked_points, np.int32).reshape((-1, 1, 2))
             cv2.polylines(frame, [pts], True, (0, 255, 0), 2)
@@ -137,7 +137,13 @@ class Perception:
                 cv2.circle(frame, tuple(center_px), int(r), (0, 255, 255), 2)
                 cv2.putText(frame, "Obstacle", (center_px[0]+5, center_px[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 1)
 
-        # =================== 🟣 경로 표시 ===================
+        # =================== 🔸 목표들 표시 ===================
+        if not self.goal_input_done and self.goal_clicks:
+            for pt in self.goal_clicks:
+                cv2.circle(frame, tuple(pt), 8, (255, 0, 255), -1)
+                cv2.putText(frame, "Goal", (pt[0]+5, pt[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 1)
+
+        # =================== 🕃 경로 표시 ===================
         if path and self.M_real2pixel is not None:
             for i in range(1, len(path)):
                 pt1 = cv2.perspectiveTransform(np.array([[[path[i-1][0], path[i-1][1]]]], dtype=np.float32), self.M_real2pixel)[0][0]
@@ -152,7 +158,7 @@ class Perception:
             cv2.circle(frame, tuple(end_px.astype(int)), 6, (0, 0, 255), -1)
             cv2.putText(frame, "Goal", (int(end_px[0]+5), int(end_px[1]-5)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
 
-        # =================== 🔵 로봇 자세 표시 ===================
+        # =================== 🔵 로벏 자세 표시 ===================
         if robot_pose and robot_center:
             x, y, yaw = robot_pose
             cx, cy = robot_center
