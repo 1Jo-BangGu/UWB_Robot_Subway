@@ -2,13 +2,69 @@ import math
 
 class Control:
     def __init__(self, client, wheel_base=5.0, base_speed=30, lookahead_dist=15.0):
+    # def __init__(self, client, wheel_base=5.0, base_speed=19, lookahead_dist=8.0):
         self.client = client
         self.WHEEL_BASE = wheel_base
         self.BASE_SPEED = base_speed
         self.LOOKAHEAD_DIST = lookahead_dist
 
-        self.ALIGN_THRESHOLD = 5
+        self.ALIGN_THRESHOLD = 10
         self.rotate_state = False
+
+        self.kp = 8.5
+        self.kd = 0.0
+        self.ki = 0.0
+
+        self.prev_error = 0.0
+        self.integral = 0.0
+
+    # def compute_lateral_error(self, robot_pose, path):
+    #     """
+    #     가장 가까운 path point 기준 lateral error 계산s
+    #     """
+    #     rx, ry, yaw_deg = robot_pose
+    #     yaw_rad = math.radians(yaw_deg)
+
+    #     # 로봇의 진행 방향 벡터
+    #     dir_vec = [math.cos(yaw_rad), math.sin(yaw_rad)]
+
+    #     # 가장 가까운 path point 찾기
+    #     min_dist = float('inf')
+    #     closest_pt = None
+    #     for px, py in path:
+    #         dist = math.hypot(rx - px, ry - py)
+    #         if dist < min_dist:
+    #             min_dist = dist
+    #             closest_pt = (px, py)
+
+    #     # 로봇 → 경로점 벡터
+    #     err_vec = [closest_pt[0] - rx, closest_pt[1] - ry]
+
+    #     # 외적: 로봇 진행 방향 기준 왼쪽이면 +, 오른쪽이면 -
+    #     lateral_error = dir_vec[0]*err_vec[1] - dir_vec[1]*err_vec[0]
+    #     print('lateral_error : ', lateral_error)
+    #     return lateral_error
+
+    # def follow_path(self, robot_pose, path):
+    #     """
+    #     lateral error를 PID로 보정하여 PWM 계산
+    #     """
+    #     error = self.compute_lateral_error(robot_pose, path)
+    #     self.integral += error
+    #     derivative = error - self.prev_error
+    #     self.prev_error = error
+
+    #     correction = self.kp * error + self.ki * self.integral + self.kd * derivative
+
+    #     # 좌우 속도 조정
+    #     left_speed = self.BASE_SPEED - correction
+    #     right_speed = self.BASE_SPEED + correction
+
+    #     # PWM 제한
+    #     left_speed = max(20, min(40, left_speed))
+    #     right_speed = max(20, min(40, right_speed))
+
+    #     return int(left_speed), int(right_speed)
 
     def follow_path(self, robot_pose, path):
         """
@@ -56,7 +112,7 @@ class Control:
         right_speed = max(20, min(40, right_speed))
         left_speed = max(20, min(40, left_speed))
 
-        return int(left_speed), int(right_speed)
+        return left_speed, right_speed
     
     def compute_path_yaw(self, path):
         """
@@ -64,11 +120,10 @@ class Control:
         """
         if len(path) < 2:
             return None  # yaw 계산 불가
-
         x0, y0 = path[0]
         x1, y1 = path[-1]
-        dx = x1 - x0
-        dy = y1 - y0
+        dx = x0 - x1
+        dy = y0 - y1
         return math.degrees(math.atan2(dy, dx))
     
     def compute_rotation_pwm(self, yaw_diff):
@@ -76,7 +131,7 @@ class Control:
         yaw_diff > 0 이면 시계 반대방향 회전 (left +, right -)
         yaw_diff < 0 이면 시계 방향 회전 (left -, right +)
         """
-        pwm_val = 25  # 회전 강도 조정 가능
+        pwm_val = 20  # 회전 강도 조정 가능
         if yaw_diff > 0:
             return pwm_val, -pwm_val
         else:
@@ -89,28 +144,29 @@ class Control:
         
         if self.rotate_state == True:
 
-            print("🟥 정지 조건 발생 또는 목표 도착 → 방향 정렬 시도 중")
+            # print("🟥 정지 조건 발생 또는 목표 도착 → 방향 정렬 시도 중")
             if not path or len(path) < 2:
-                print("[Control] 경로 정보 부족 → 방향 정렬 불가")
+                # print("[Control] 경로 정보 부족 → 방향 정렬 불가")
                 return
 
             current_yaw = robot_pose[2]
             path_yaw = self.compute_path_yaw(path)
 
             if path_yaw is None:
-                print("[Control] Path yaw 계산 실패")
+                # print("[Control] Path yaw 계산 실패")
                 return
 
             yaw_diff = (path_yaw - current_yaw + 180) % 360 - 180  # -180 ~ 180
 
-            print(f"[Control] 현재 yaw: {current_yaw:.2f}°, 경로 yaw: {path_yaw:.2f}°, 차이: {yaw_diff:.2f}°")
+            # print(f"[Control] 현재 yaw: {current_yaw:.2f}°, 경로 yaw: {path_yaw:.2f}°, 차이: {yaw_diff:.2f}°")
 
             if abs(yaw_diff) > self.ALIGN_THRESHOLD:
                 pwm_left, pwm_right = self.compute_rotation_pwm(yaw_diff)
-                msg = f"{pwm_left}, {pwm_right}"
+                msg = f"{pwm_left} {pwm_right}"
                 try:
                     self.client.send_message(topic='control', message=msg)
-                    print(f"[Control] 정렬 중 회전 명령 전송 → {msg}")
+                    # print(f"[Control] 정렬 중 회전 명령 전송 → {msg}")
+                    
                 except Exception as e:
                     print(f"[Control Error] 회전 명령 전송 실패: {e}")
             else:
@@ -124,10 +180,10 @@ class Control:
 
         left, right = self.follow_path(robot_pose, path)
         # print(f"[Control] PWM 계산 완료 → Left: {left}, Right: {right}")
-        msg = f"{left}, {right}"
+        msg = f"{left} {right}"
 
         try:
             self.client.send_message(topic='control', message=msg)
-            # print(f"[Control] 제어 명령 전송 완료 → {msg}")
+            print(f"[Control] 제어 명령 전송 완료 → {msg}")
         except Exception as e:
             print(f"[Control Error] 전송 실패: {e}")

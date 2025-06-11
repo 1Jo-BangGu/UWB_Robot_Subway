@@ -88,7 +88,7 @@ class Perception:
     def get_obstacle_list(self):
         if self.M_pixel2real is None:
             return []
-        return [tuple(cv2.perspectiveTransform(np.array([[[x, y]]], dtype=np.float32), self.M_pixel2real)[0][0]) + (10,) for x, y in self.obstacle_clicks]
+        return [tuple(cv2.perspectiveTransform(np.array([[[x, y]]], dtype=np.float32), self.M_pixel2real)[0][0]) + (3,) for x, y in self.obstacle_clicks]
 
     def get_goal_list(self):
         if self.M_pixel2real is None:

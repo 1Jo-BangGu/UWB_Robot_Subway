@@ -34,7 +34,7 @@ if __name__ == "__main__":
     client_socketio.start()
 
     while client.latest_frame is None:
-        time.sleep(0.1)
+        time.sleep(0.01)
 
     # 🧠 Control 클래스에 client 주입
     control = Control(client)
@@ -101,5 +101,7 @@ if __name__ == "__main__":
         )
 
         cv2.imshow("Robot View", frame)
+        # 🌐 시각화된 프레임 서버로 전송
+        client.upload_frame(frame)
 
     cv2.destroyAllWindows()

@@ -48,6 +48,22 @@ class Client:
                 json={'topic': topic, 'message': message},
                 timeout=1.5
             )
-            print(f"[{topic}] {message} 전송 완료")
+            # print(f"[{topic}] {message} 전송 완료")
         except Exception as e:
             print(f"[{topic} error] 메시지 전송 실패: {e}")
+
+    def upload_frame(self, frame, quality=50):
+        """현재 프레임을 서버로 비동기 업로드 (JPEG 압축 후 전송)"""
+        def _send(encoded_frame):
+            try:
+                requests.post(
+                    f'http://{self.server_ip}:5000/upload/processed_global',
+                    files={'frame': ('frame.jpg', encoded_frame.tobytes(), 'image/jpeg')},
+                    timeout=3
+                )
+            except Exception as e:
+                print(f"[frame upload error] {e}")
+
+        success, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
+        if success:
+            threading.Thread(target=_send, args=(buffer,), daemon=True).start()
