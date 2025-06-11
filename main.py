@@ -68,7 +68,7 @@ if __name__ == "__main__":
             map_size = (180, 90)
             patrol_mode = False
 
-            latest_path, stop_signal = planning.plan(
+            latest_path, stop_signal, arrive_flag = planning.plan(
                 robot_pose=robot_position,
                 obstacle_list=obstacle_list,
                 map_size=map_size,
@@ -78,7 +78,7 @@ if __name__ == "__main__":
 
 
             # ======================== 🎮 Control 단계 ========================
-            control.update_and_send(robot_position, latest_path, stop_signal)
+            control.update_and_send(robot_position, latest_path, stop_signal, arrive_flag)
 
         # ======================== 🖼️ Visualization 단계 ========================
         perception.draw_visuals(

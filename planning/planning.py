@@ -19,6 +19,7 @@ class Planning:
         self.current_goal_idx = 0
         self.latest_path = []
         self.goal_reached = False
+        self.arrive_flag = False
 
     def get_action(self):
         return [(0, 1, 1), (1, 0, 1), (0, -1, 1), (-1, 0, 1),
@@ -75,7 +76,7 @@ class Planning:
         stop_signal = False
         path = []
 
-        if not goals or self.current_goal_idx >= len(goals):
+        if not goals or self.current_goal_idx >= len(goals): # goal이 없는 경우, 인덱스 초과인 경우
             stop_signal = True
             self.latest_path = []
             return self.latest_path, stop_signal
@@ -84,6 +85,7 @@ class Planning:
 
         # 도달 판정
         if self.heuristic(robot_pose[:2], current_goal) < 10:
+            self.arrive_flag = True
             self.current_goal_idx += 1
             self.latest_path = []
             if self.current_goal_idx >= len(goals):
@@ -92,12 +94,14 @@ class Planning:
                 return self.latest_path, stop_signal
 
             current_goal = goals[self.current_goal_idx]
+        
 
         # 아직 도달하지 않았고 경로가 없으면 생성
         if not self.latest_path:
+            self.arrive_flag = False
             self.latest_path = self.a_star(robot_pose[:2], current_goal, map_size, obstacle_list)
             if not self.latest_path:
                 print(f"⚠️ {self.current_goal_idx+1}번 경로 생성 실패 → 다음으로")
                 self.current_goal_idx += 1
 
-        return self.latest_path, stop_signal
+        return self.latest_path, stop_signal, self.arrive_flag
