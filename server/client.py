@@ -12,6 +12,7 @@ class Client:
         self.running = False
         self.stream_url = f'http://{server_ip}:5000/stream/global'
         self.latest_frame = None
+        self.transfer_data_url = f'http://{server_ip}:5000/transfer_data'
 
     def network_thread(self):
         session = requests.Session()
@@ -38,3 +39,15 @@ class Client:
     def start(self):
         self.running = True
         threading.Thread(target=self.network_thread, daemon=True).start()
+
+    def send_message(self, topic, message):
+        """비동기 메시지 전송"""
+        try:
+            requests.post(
+                f'{self.transfer_data_url}',
+                json={'topic': topic, 'message': message},
+                timeout=1.5
+            )
+            print(f"[{topic}] {message} 전송 완료")
+        except Exception as e:
+            print(f"[{topic} error] 메시지 전송 실패: {e}")

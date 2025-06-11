@@ -54,7 +54,7 @@ class Control:
         msg = f"{left}, {right}"
 
         try:
-            #self.client.send_message(topic='control', message=msg)
+            self.client.send_message(topic='control', message=msg)
             print(f"[Control] 제어 명령 전송 완료 → {msg}")
         except Exception as e:
             print(f"[Control Error] 전송 실패: {e}")
