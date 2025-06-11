@@ -72,36 +72,54 @@ class Planning:
                 heapq.heappush(open_list, (neighbor.f, neighbor))
         return []
 
-    def plan(self, robot_pose, obstacle_list, map_size, goals, patrol_signal=False):
+    def plan(self, initial_robot_pose, robot_pose, obstacle_list, map_size, goals, return_flag=False, fire_signal=0, fall_signal=0):
         stop_signal = False
         path = []
 
-        if not goals or self.current_goal_idx >= len(goals): # goal이 없는 경우, 인덱스 초과인 경우
+        if fire_signal == 1 or fall_signal == 1:
             stop_signal = True
             self.latest_path = []
-            return self.latest_path, stop_signal
+            self.arrive_flag = False
 
-        current_goal = goals[self.current_goal_idx]
+            return self.latest_path, stop_signal, self.arrive_flag
 
-        # 도달 판정
-        if self.heuristic(robot_pose[:2], current_goal) < 10:
-            self.arrive_flag = True
-            self.current_goal_idx += 1
-            self.latest_path = []
-            if self.current_goal_idx >= len(goals):
+        if return_flag == 1:
+            ## 초기 위치로 이동
+            self.latest_path = self.a_star(robot_pose[:2], initial_robot_pose, map_size, obstacle_list)
+            stop_signal = False
+            self.arrive_flag = False
+
+            return self.latest_path, stop_signal, self.arrive_flag
+
+        else:
+            stop_signal = False
+            if not goals or self.current_goal_idx >= len(goals): # goal이 없는 경우, 인덱스 초과인 경우
                 stop_signal = True
-                print("✅ 모든 목표 도달 완료!")
-                return self.latest_path, stop_signal
+                self.latest_path = []
+                return self.latest_path, stop_signal, self.arrive_flag
 
             current_goal = goals[self.current_goal_idx]
-        
 
-        # 아직 도달하지 않았고 경로가 없으면 생성
-        if not self.latest_path:
-            self.arrive_flag = False
-            self.latest_path = self.a_star(robot_pose[:2], current_goal, map_size, obstacle_list)
+            # 아직 도달하지 않았고 경로가 없으면 생성
             if not self.latest_path:
-                print(f"⚠️ {self.current_goal_idx+1}번 경로 생성 실패 → 다음으로")
-                self.current_goal_idx += 1
+                self.arrive_flag = False
+                self.latest_path = self.a_star(robot_pose[:2], current_goal, map_size, obstacle_list)
+                if not self.latest_path:
+                    print(f"⚠️ {self.current_goal_idx+1}번 경로 생성 실패 → 다음으로")
+                    self.current_goal_idx += 1
 
-        return self.latest_path, stop_signal, self.arrive_flag
+            # 도달 판정
+            if self.heuristic(robot_pose[:2], current_goal) < 10:
+                self.arrive_flag = True
+                self.current_goal_idx += 1
+                self.latest_path = []
+                if self.current_goal_idx >= len(goals):
+                    stop_signal = True
+                    print("✅ 모든 목표 도달 완료!")
+                    return self.latest_path, stop_signal
+
+                current_goal = goals[self.current_goal_idx]
+            
+            return self.latest_path, stop_signal, self.arrive_flag
+
+       
