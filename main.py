@@ -88,5 +88,6 @@ if __name__ == "__main__":
         )
 
         cv2.imshow("Robot View", frame)
-
+        # 🌐 시각화된 프레임 서버로 전송
+        client.upload_frame(frame)
     cv2.destroyAllWindows()
