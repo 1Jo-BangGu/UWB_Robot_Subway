@@ -65,7 +65,9 @@ class Perception:
         dy = bottom_center[1] - top_center[1]
         yaw_rad = math.atan2(dy, dx)
         yaw_deg = math.degrees(yaw_rad)
-        return yaw_deg + 360 if yaw_deg < 0 else yaw_deg
+        # return yaw_deg + 360 if yaw_deg < 0 else yaw_deg
+        yaw_deg = ((yaw_deg + 180) % 360) - 180
+        return yaw_deg
 
     def detect_robot_position(self, frame):
         if not self.transform_calculated or self.M_pixel2real is None:

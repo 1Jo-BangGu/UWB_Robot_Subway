@@ -3,32 +3,49 @@
 import math
 
 class Control:
-    def __init__(self, client, wheel_base=10.0, base_speed=30, lookahead_dist=20.0):
+    def __init__(self, client, wheel_base=5.0, base_speed=30, lookahead_dist=15.0):
         self.client = client
         self.WHEEL_BASE = wheel_base
         self.BASE_SPEED = base_speed
         self.LOOKAHEAD_DIST = lookahead_dist
 
     def follow_path(self, robot_pose, path):
+        """
+        입력:
+            robot_pose: (x, y, yaw in degrees)
+            path: list of (x, y)
+
+        출력:
+            (PWM_left, PWM_right)
+        """
         rx, ry, yaw_deg = robot_pose
         yaw_rad = math.radians(yaw_deg)
 
-        # Lookahead 지점 찾기
+        # 🔹 1. 가장 가까운 포인트 인덱스 찾기
+        min_dist = float('inf')
+        closest_index = 0
+        for i, pt in enumerate(path):
+            dist = math.hypot(pt[0] - rx, pt[1] - ry)
+            if dist < min_dist:
+                min_dist = dist
+                closest_index = i
+        # print('closest waypoint idx : ',closest_index)
+        # 🔹 2. 가까운 포인트부터 Lookahead 포인트 탐색
         goal = path[-1]
-        for pt in path:
+        for pt in path[closest_index:]:
             dist = math.hypot(pt[0] - rx, pt[1] - ry)
             if dist >= self.LOOKAHEAD_DIST:
                 goal = pt
                 break
         gx, gy = goal
 
-        # 로봇 기준 좌표계 변환
+        # 로봇 기준 좌표계로 변환
         dx = gx - rx
         dy = gy - ry
         alpha = math.atan2(dy, dx) - yaw_rad
-        alpha = (alpha + math.pi) % (2 * math.pi) - math.pi
+        alpha = (alpha + math.pi) % (2 * math.pi) - math.pi  # -pi ~ pi 정규화
 
-        # 곡률 계산
+        # 곡률 및 회전 계산
         curvature = (2 * math.sin(alpha)) / self.LOOKAHEAD_DIST
         omega = self.BASE_SPEED * curvature
         right_speed = self.BASE_SPEED + omega * (self.WHEEL_BASE / 2)
