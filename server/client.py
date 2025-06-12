@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import collections
 
-class RaspiVisionClient:
+class Client:
     def __init__(self, server_ip):
         self.server_ip = server_ip
         self.frame_queue = collections.deque(maxlen=5)
@@ -12,6 +12,7 @@ class RaspiVisionClient:
         self.running = False
         self.stream_url = f'http://{server_ip}:5000/stream/global'
         self.latest_frame = None
+        self.transfer_data_url = f'http://{server_ip}:5000/transfer_data'
 
     def network_thread(self):
         session = requests.Session()
@@ -38,3 +39,31 @@ class RaspiVisionClient:
     def start(self):
         self.running = True
         threading.Thread(target=self.network_thread, daemon=True).start()
+
+    def send_message(self, topic, message):
+        """비동기 메시지 전송"""
+        try:
+            requests.post(
+                f'{self.transfer_data_url}',
+                json={'topic': topic, 'message': message},
+                timeout=1.5
+            )
+            # print(f"[{topic}] {message} 전송 완료")
+        except Exception as e:
+            print(f"[{topic} error] 메시지 전송 실패: {e}")
+
+    def upload_frame(self, frame, quality=50):
+        """현재 프레임을 서버로 비동기 업로드 (JPEG 압축 후 전송)"""
+        def _send(encoded_frame):
+            try:
+                requests.post(
+                    f'http://{self.server_ip}:5000/upload/processed_global',
+                    files={'frame': ('frame.jpg', encoded_frame.tobytes(), 'image/jpeg')},
+                    timeout=3
+                )
+            except Exception as e:
+                print(f"[frame upload error] {e}")
+
+        success, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
+        if success:
+            threading.Thread(target=_send, args=(buffer,), daemon=True).start()
