@@ -249,7 +249,7 @@ class Planning:
         stop_signal = False
         print(f'return_flag : {return_flag}, detect_flag : {self.detect_flag}')
 
-        if self.detect_flag == 0 and fire_signal == 1 or fall_signal == 1:
+        if self.detect_flag == 0 and (fire_signal == 1 or fall_signal == 1):
             print('detect_flag changed to True')
             self.detect_flag = 1
             return_flag = -1
